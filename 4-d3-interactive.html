@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js Interactive Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .bar {
+            fill: steelblue;
+            transition: fill 0.3s;
+        }
+        .bar:hover {
+            fill: orange;
+        }
+        .axis {
+            font-size: 12px;
+        }
+        .tooltip {
+            position: absolute;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interactive Bar Chart with D3.js</h1>
+    <div id="chart"></div>
+
+    <script>
+        // Data
+        const data = [
+            { name: 'Jan', value: 30 },
+            { name: 'Feb', value: 45 },
+            { name: 'Mar', value: 60 },
+            { name: 'Apr', value: 55 },
+            { name: 'May', value: 70 },
+            { name: 'Jun', value: 85 }
+        ];
+
+        // Dimensions
+        const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+        const width = 600 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+
+        // Create SVG
+        const svg = d3.select('#chart')
+            .append('svg')
+            .attr('width', width + margin.left + margin.right)
+            .attr('height', height + margin.top + margin.bottom)
+            .append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        // Scales
+        const x = d3.scaleBand()
+            .domain(data.map(d => d.name))
+            .range([0, width])
+            .padding(0.2);
+
+        const y = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.value)])
+            .nice()
+            .range([height, 0]);
+
+        // Tooltip
+        const tooltip = d3.select('body')
+            .append('div')
+            .attr('class', 'tooltip');
+
+        // Bars
+        svg.selectAll('.bar')
+            .data(data)
+            .enter()
+            .append('rect')
+            .attr('class', 'bar')
+            .attr('x', d => x(d.name))
+            .attr('y', d => y(d.value))
+            .attr('width', x.bandwidth())
+            .attr('height', d => height - y(d.value))
+            .on('mouseover', function(event, d) {
+                tooltip
+                    .style('opacity', 1)
+                    .html(`<strong>${d.name}</strong><br/>Value: ${d.value}`)
+                    .style('left', (event.pageX + 10) + 'px')
+                    .style('top', (event.pageY - 28) + 'px');
+            })
+            .on('mouseout', function() {
+                tooltip.style('opacity', 0);
+            });
+
+        // X Axis
+        svg.append('g')
+            .attr('class', 'axis')
+            .attr('transform', `translate(0,${height})`)
+            .call(d3.axisBottom(x));
+
+        // Y Axis
+        svg.append('g')
+            .attr('class', 'axis')
+            .call(d3.axisLeft(y));
+
+        // Labels
+        svg.append('text')
+            .attr('x', width / 2)
+            .attr('y', height + 35)
+            .attr('text-anchor', 'middle')
+            .text('Month');
+
+        svg.append('text')
+            .attr('transform', 'rotate(-90)')
+            .attr('x', -height / 2)
+            .attr('y', -35)
+            .attr('text-anchor', 'middle')
+            .text('Sales ($K)');
+    </script>
+</body>
+</html>

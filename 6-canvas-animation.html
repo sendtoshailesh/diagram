@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Canvas Animation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        canvas {
+            background: white;
+            border: 2px solid #333;
+            display: block;
+            margin: 20px auto;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Canvas Animation Examples</h1>
+    
+    <div class="controls">
+        <button onclick="startAnimation()">Start</button>
+        <button onclick="stopAnimation()">Stop</button>
+        <button onclick="resetAnimation()">Reset</button>
+    </div>
+
+    <canvas id="myCanvas" width="800" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let animationId;
+        let particles = [];
+        let time = 0;
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.radius = Math.random() * 3 + 2;
+                this.color = `hsl(${Math.random() * 360}, 70%, 60%)`;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Bounce off walls
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+                // Keep within bounds
+                this.x = Math.max(0, Math.min(canvas.width, this.x));
+                this.y = Math.max(0, Math.min(canvas.height, this.y));
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particles = [];
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height
+                ));
+            }
+        }
+
+        function drawWave() {
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            
+            for (let x = 0; x < canvas.width; x++) {
+                const y = canvas.height / 2 + Math.sin((x + time) * 0.02) * 50;
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.strokeStyle = '#4ECDC4';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        function drawChart() {
+            const barWidth = 60;
+            const spacing = 20;
+            const startX = 50;
+            const baseY = canvas.height - 50;
+            
+            const data = [
+                { label: 'A', value: 30 + Math.sin(time * 0.05) * 10 },
+                { label: 'B', value: 50 + Math.cos(time * 0.03) * 15 },
+                { label: 'C', value: 70 + Math.sin(time * 0.04) * 20 },
+                { label: 'D', value: 45 + Math.cos(time * 0.06) * 12 }
+            ];
+
+            data.forEach((item, i) => {
+                const x = startX + i * (barWidth + spacing);
+                const height = item.value * 2;
+                
+                // Bar
+                const gradient = ctx.createLinearGradient(x, baseY - height, x, baseY);
+                gradient.addColorStop(0, '#FF6B6B');
+                gradient.addColorStop(1, '#4ECDC4');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, baseY - height, barWidth, height);
+                
+                // Label
+                ctx.fillStyle = '#333';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(item.label, x + barWidth / 2, baseY + 20);
+                
+                // Value
+                ctx.fillStyle = '#666';
+                ctx.font = '12px Arial';
+                ctx.fillText(Math.round(item.value), x + barWidth / 2, baseY - height - 5);
+            });
+        }
+
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw wave
+            drawWave();
+
+            // Update and draw particles
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            // Draw animated chart
+            drawChart();
+
+            time++;
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function startAnimation() {
+            if (!animationId) {
+                animate();
+            }
+        }
+
+        function stopAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+
+        function resetAnimation() {
+            stopAnimation();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            time = 0;
+            init();
+        }
+
+        // Initialize
+        init();
+        startAnimation();
+    </script>
+</body>
+</html>
